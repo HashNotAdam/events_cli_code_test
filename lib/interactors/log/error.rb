@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+module Log
+  class Error
+    attr_reader :message
+
+    def self.call(message:)
+      new(message: message).call
+    end
+
+    def initialize(message:)
+      @message = message
+    end
+
+    def call
+      $stderr.puts(message)
+    end
+  end
+end

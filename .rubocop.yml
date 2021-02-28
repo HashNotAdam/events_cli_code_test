@@ -89,6 +89,9 @@ Style/Documentation:
 Style/EndlessMethod:
   Enabled: false
 
+Style/StderrPuts:
+  Enabled: false
+
 Style/TrailingBodyOnMethodDefinition:
   Enabled: false
 

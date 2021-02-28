@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-class Application
-  def self.call
-    new.call
-  end
+require "interactors/application_interactor"
+require "interactors/log/info"
 
-  def call; end
+class Application < ApplicationInteractor
+  def call
+    Log::Info.(message: "ABC", something_else: "DEF")
+  end
 end
