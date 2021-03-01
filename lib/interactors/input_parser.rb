@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "interactors/application_interactor"
+require "interactors/create_event"
 require "interactors/documentation"
 require "interactors/exit"
 
@@ -12,6 +13,8 @@ class InputParser < ApplicationInteractor
 
     segments = split_input(input)
     interactor = interactor_class(segments)
+    return nil if interactor.nil?
+
     {
       interactor: interactor,
       arguments: arguments(interactor, segments),
@@ -30,15 +33,28 @@ class InputParser < ApplicationInteractor
 
   def escape_strings(input)
     dup_input = input.dup
-    string_matches = dup_input.match(/('[^']+')/)
-    return dup_input if string_matches.nil?
+    string_matches = quote_matches(dup_input)
+    return dup_input if string_matches.empty?
 
-    string_matches.to_a[1..].each do
+    string_matches.each do
       escaped = _1.gsub(" ", STRING_ESCAPE_CHARACTER)
       dup_input.sub!(_1, escaped)
     end
 
-    dup_input.tr("'", "")
+    remove_quotes(dup_input)
+  end
+
+  def quote_matches(string)
+    matches_to_a(string, /('[^']+')/).
+      concat(matches_to_a(string, /("[^"]+")/))
+  end
+
+  def matches_to_a(string, regex)
+    string.match(regex).to_a[1..].to_a
+  end
+
+  def remove_quotes(string)
+    string.gsub(/'([^\s]+)'/, '\1').gsub(/"([^\s]+)"/, '\1')
   end
 
   def unescape_string(string)
@@ -53,6 +69,7 @@ class InputParser < ApplicationInteractor
     end
 
     Object.const_get(class_name)
+  rescue NameError
   end
 
   def arguments(interactor, input_array)

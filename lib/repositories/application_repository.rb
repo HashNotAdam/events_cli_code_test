@@ -10,6 +10,10 @@ class ApplicationRepository
       records << record
     end
 
+    def all
+      records.dup.freeze
+    end
+
     def where(attribute, value)
       records.select { _1.public_send(attribute) == value }
     end

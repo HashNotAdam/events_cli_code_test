@@ -71,6 +71,33 @@ RSpec.describe ApplicationRepository do
     end
   end
 
+  describe ".all" do
+    let(:records) do
+      [
+        model.new(name: "Abc", age: 12),
+        model.new(name: "Def", age: 12),
+        model.new(name: "Abc", age: 23),
+      ]
+    end
+
+    before do
+      records.each { repository << _1 }
+    end
+
+    it "returns all records in the repository" do
+      expect(repository.all).to contain_exactly(*records)
+    end
+
+    it "returns a copy of the records, not a reference" do
+      records = repository.all
+      expect(repository.all).not_to be(records)
+    end
+
+    it "freezes the array to signal it should not be modified" do
+      expect(repository.all).to be_frozen
+    end
+  end
+
   describe ".where" do
     let(:records) do
       [

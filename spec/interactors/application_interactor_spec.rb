@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "interactors/application_interactor"
+require "interactors/log/error"
 
 RSpec.describe ApplicationInteractor do
   let(:sub_class) do
@@ -8,10 +9,12 @@ RSpec.describe ApplicationInteractor do
       param :arg
 
       def call
-        $stdout.puts("Should not run")
+        raise "Should not run"
       end
     end
   end
+
+  before { allow(Log::Error).to receive(:call) }
 
   it "creates an attr_reader for each parameter" do
     instance = sub_class.new(arg: "ABC")
@@ -19,29 +22,16 @@ RSpec.describe ApplicationInteractor do
   end
 
   context "when passed a positional argument" do
-    let(:sub_class) do
-      Class.new(ApplicationInteractor) do
-        def call
-          $stdout.puts("Should not run")
-        end
-      end
-    end
-
-    it "prints an error to STDERR" do
-      expect { sub_class.("ABC") }.
-        to output(
-          a_string_starting_with(
-            "#{sub_class} called with positional arguments but interactors " \
-            "only accept keyword arguments"
-          )
-        ).to_stderr
+    it "logs an error" do
+      sub_class.("ABC")
+      expect(Log::Error).to have_received(:call).with(
+        message: "#{sub_class} called with positional arguments but " \
+          "interactors only accept keyword arguments"
+      )
     end
 
     it "stops execution" do
-      expect { sub_class.("ABC") }.
-        not_to output(
-          a_string_starting_with("Should not run")
-        ).to_stdout
+      expect { sub_class.("ABC") }.not_to raise_exception
     end
   end
 
@@ -57,20 +47,15 @@ RSpec.describe ApplicationInteractor do
       end
     end
 
-    it "prints an error to STDERR" do
-      expect { sub_class.(arg1: "ABC") }.
-        to output(
-          a_string_starting_with(
-            "#{sub_class} expects to receive arguments :arg1, :arg2"
-          )
-        ).to_stderr
+    it "logs an error" do
+      sub_class.(arg1: "ABC")
+      expect(Log::Error).to have_received(:call).with(
+        message: "#{sub_class} expects to receive arguments :arg1, :arg2"
+      )
     end
 
     it "stops execution" do
-      expect { sub_class.(arg1: "ABC") }.
-        not_to output(
-          a_string_starting_with("Should not run")
-        ).to_stdout
+      expect { sub_class.(arg1: "ABC") }.not_to raise_exception
     end
   end
 
@@ -85,20 +70,16 @@ RSpec.describe ApplicationInteractor do
       end
     end
 
-    it "prints an error to STDERR" do
-      expect { sub_class.(arg: "ABC", arg2: "DEF", arg3: "GHI") }.
-        to output(
-          a_string_starting_with(
-            "#{sub_class} received extra arguments :arg2, :arg3"
-          )
-        ).to_stderr
+    it "logs an error" do
+      sub_class.(arg: "ABC", arg2: "DEF", arg3: "GHI")
+      expect(Log::Error).to have_received(:call).with(
+        message: "#{sub_class} received extra arguments :arg2, :arg3"
+      )
     end
 
     it "stops execution" do
       expect { sub_class.(arg: "ABC", arg2: "DEF", arg3: "GHI") }.
-        not_to output(
-          a_string_starting_with("Should not run")
-        ).to_stdout
+        not_to raise_exception
     end
   end
 end

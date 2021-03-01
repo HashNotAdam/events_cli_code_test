@@ -21,8 +21,6 @@ class Documentation < ApplicationInteractor
         - Talk times cannot overlap and they must be in sequential order
     PRINT TALKS event_name
     EXIT
-
-    Enter command:
   MESSAGE
   private_constant :DOCUMENTATION
 
