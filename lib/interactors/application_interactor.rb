@@ -4,6 +4,8 @@ require "interactors/log/error"
 
 class ApplicationInteractor
   class << self
+    attr_reader :parameters
+
     def call(*args, **keyword_args)
       new(*args, **keyword_args).call
     rescue HaltInteraction
@@ -14,21 +16,9 @@ class ApplicationInteractor
       MESSAGE
     end
 
-    def string(parameter_name)
-      parameter(parameter_name, :string)
-    end
-
-    def expected_keyword_args
-      @fields&.keys
-    end
-
-    private
-
-    def parameter(name, type)
-      @fields ||= {}
-      @fields[name] = {
-        type: type,
-      }
+    def param(name)
+      @parameters ||= []
+      @parameters << name
       attr_reader name
     end
   end
@@ -37,7 +27,6 @@ class ApplicationInteractor
     validate_args(args)
     validate_keyword_args(keyword_args)
     assign_arguments(keyword_args)
-    validate_argument_types
   end
 
   private
@@ -52,14 +41,14 @@ class ApplicationInteractor
   end
 
   def validate_keyword_args(keyword_args)
-    return if self.class.expected_keyword_args.nil?
+    return if self.class.parameters.nil?
 
     validate_no_missing_keys(keyword_args)
     validate_no_extra_keys(keyword_args)
   end
 
   def validate_no_missing_keys(keyword_args)
-    expected_keys = self.class.expected_keyword_args
+    expected_keys = self.class.parameters
     supplied_keys = keyword_args.keys
     missing_keys = expected_keys - supplied_keys
     return if missing_keys.empty?
@@ -71,7 +60,7 @@ class ApplicationInteractor
   end
 
   def validate_no_extra_keys(keyword_args)
-    expected_keys = self.class.expected_keyword_args
+    expected_keys = self.class.parameters
     supplied_keys = keyword_args.keys
     extra_keys = supplied_keys - expected_keys
     return if extra_keys.empty?
@@ -85,18 +74,6 @@ class ApplicationInteractor
   def assign_arguments(keyword_args)
     keyword_args.each do |key, value|
       instance_variable_set("@#{key}", value)
-    end
-  end
-
-  def validate_argument_types
-    self.class.instance_variable_get(:@fields)&.each do |name, options|
-      value = instance_variable_get("@#{name}")
-      type_class = Object.const_get(options[:type].to_s.capitalize)
-      next if value.is_a?(type_class)
-
-      error(
-        ":#{name} is expected to be a #{type_class} but it is a #{value.class}"
-      )
     end
   end
 

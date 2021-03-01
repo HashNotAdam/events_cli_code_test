@@ -15,13 +15,27 @@ end
 
 RSpec.describe Application do
   let(:bin_file) { "bin/events-manager" }
+  let(:inputs) { %w[EXIT] }
 
-  before { described_class.inputs = %w[EXIT] }
+  before { described_class.inputs = inputs }
 
   it "presents the documentation" do
     expect { described_class.call }.
       to output(a_string_starting_with(Documentation.call)).
       to_stdout
+  end
+
+  context "when no command is given" do
+    let(:inputs) { ["", "EXIT"] }
+
+    it "presents the documentation" do
+      expect { described_class.call }.
+        to output(
+          a_string_matching(
+            /.*#{Documentation.call}.*#{Documentation.call}/m
+          )
+        ).to_stdout
+    end
   end
 
   it "creates and prints events with talks" do
