@@ -25,11 +25,47 @@ RSpec.describe InputParser do
         {
           interactor: CreateTalk,
           arguments: {
-            event: "an_event",
+            event_name: "an_event",
             name: "My Talk",
             start_time: "9:00am",
             end_time: "10:00am",
-            speaker: "John",
+            speaker_name: "John",
+          },
+        }
+      )
+    end
+  end
+
+  context "when an argument is wrapped in single-quotes" do
+    it "treats everything inside the quotes as one argument" do
+      input = "CREATE TALK an_event 'My Talk' 9:00am 10:00am 'John Smith'"
+      expect(described_class.(input: input)).to eq(
+        {
+          interactor: CreateTalk,
+          arguments: {
+            event_name: "an_event",
+            name: "My Talk",
+            start_time: "9:00am",
+            end_time: "10:00am",
+            speaker_name: "John Smith",
+          },
+        }
+      )
+    end
+  end
+
+  context "when an attribute is wrapped in double-quotes" do
+    it "treats everything inside the quotes as one argument" do
+      input = %(CREATE TALK an_event "John's Talk" 9:00am 10:00am "John Smith")
+      expect(described_class.(input: input)).to eq(
+        {
+          interactor: CreateTalk,
+          arguments: {
+            event_name: "an_event",
+            name: "John's Talk",
+            start_time: "9:00am",
+            end_time: "10:00am",
+            speaker_name: "John Smith",
           },
         }
       )

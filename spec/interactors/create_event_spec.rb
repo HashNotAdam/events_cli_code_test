@@ -7,6 +7,8 @@ require "repositories/events"
 RSpec.describe CreateEvent do
   before { allow(Log::Info).to receive(:call) }
 
+  after { Events.clear_all }
+
   it "adds a new event to the Events repository" do
     expect { described_class.(name: "Abc") }.
       to change { Events.all.count }.by(1)

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "errors/halt_interaction"
 require "interactors/log/error"
 
 class ApplicationInteractor
@@ -8,7 +9,7 @@ class ApplicationInteractor
 
     def call(*args, **keyword_args)
       new(*args, **keyword_args).call
-    rescue HaltInteraction
+    rescue HaltInteractionError
     rescue StandardError => e
       $stderr.write(<<~MESSAGE)
         An unexpected error has occurred: #{e.message}
@@ -79,8 +80,6 @@ class ApplicationInteractor
 
   def error(message)
     Log::Error.(message: message)
-    raise HaltInteraction
+    raise HaltInteractionError
   end
 end
-
-class HaltInteraction < StandardError; end

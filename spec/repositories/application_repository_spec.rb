@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "errors/invalid_record"
 require "interactors/log/fatal_error"
 require "models/application_model"
 require "repositories/application_repository"
@@ -64,9 +65,7 @@ RSpec.describe ApplicationRepository do
 
       it "raises an fatal error" do
         record = model.new
-        repository << record
-        expect(Log::FatalError).to have_received(:call).
-          with(message: "#{record.class.name} is not valid")
+        expect { repository << record }.to raise_error InvalidRecordError
       end
     end
   end
@@ -95,6 +94,25 @@ RSpec.describe ApplicationRepository do
 
     it "freezes the array to signal it should not be modified" do
       expect(repository.all).to be_frozen
+    end
+  end
+
+  describe ".clear_all" do
+    let(:records) do
+      [
+        model.new(name: "Abc", age: 12),
+        model.new(name: "Def", age: 12),
+        model.new(name: "Abc", age: 23),
+      ]
+    end
+
+    before do
+      records.each { repository << _1 }
+    end
+
+    it "deletes all records" do
+      expect { repository.clear_all }.
+        to change { repository.all.count }.to(0)
     end
   end
 

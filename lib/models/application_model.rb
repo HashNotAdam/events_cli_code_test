@@ -26,8 +26,16 @@ class ApplicationModel
     end
   end
 
+  def errors
+    @errors ||= []
+  end
+
+  def error_messages
+    errors.map { "       #{_1}." }.join("\n")
+  end
+
   def valid?
-    true
+    errors.empty?
   end
 
   private

@@ -2,6 +2,8 @@
 
 require "interactors/application_interactor"
 require "interactors/create_event"
+require "interactors/create_speaker"
+require "interactors/create_talk"
 require "interactors/documentation"
 require "interactors/exit"
 
@@ -45,12 +47,9 @@ class InputParser < ApplicationInteractor
   end
 
   def quote_matches(string)
-    matches_to_a(string, /('[^']+')/).
-      concat(matches_to_a(string, /("[^"]+")/))
-  end
-
-  def matches_to_a(string, regex)
-    string.match(regex).to_a[1..].to_a
+    string.scan(/('[^']+')/).concat(
+      string.scan(/("[^"]+")/)
+    ).flatten
   end
 
   def remove_quotes(string)

@@ -2,6 +2,9 @@
 
 require "application"
 require "interactors/documentation"
+require "repositories/events"
+require "repositories/speakers"
+require "repositories/talks"
 
 class Application
   class << self
@@ -18,6 +21,12 @@ RSpec.describe Application do
   let(:inputs) { %w[EXIT] }
 
   before { described_class.inputs = inputs }
+
+  after do
+    Events.clear_all
+    Speakers.clear_all
+    Talks.clear_all
+  end
 
   it "presents the documentation" do
     expect { described_class.call }.

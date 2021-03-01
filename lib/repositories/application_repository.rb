@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "errors/invalid_record"
 require "interactors/log/error"
 
 class ApplicationRepository
@@ -8,10 +9,15 @@ class ApplicationRepository
       incorrect_class_error unless record.instance_of?(record_class)
       invalid_record_error(record) unless record.valid?
       records << record
+      record
     end
 
     def all
-      records.dup.freeze
+      records.dup.to_a.freeze
+    end
+
+    def clear_all
+      @records = nil
     end
 
     def where(attribute, value)
@@ -21,7 +27,7 @@ class ApplicationRepository
     private
 
     def incorrect_class_error
-      error("New record should be of type #{record_class}")
+      Log::FatalError.(message: "New record should be of type #{record_class}")
     end
 
     def record_class
@@ -29,11 +35,10 @@ class ApplicationRepository
     end
 
     def invalid_record_error(record)
-      error("#{record.class.name} is not valid")
-    end
-
-    def error(message)
-      Log::FatalError.(message: message)
+      raise(
+        InvalidRecordError,
+        "Error: #{record_class} is not valid.\n#{record.error_messages}"
+      )
     end
 
     def records
@@ -42,6 +47,6 @@ class ApplicationRepository
   end
 
   def initialize
-    self.class.error("#{self.class.name} is an abstract class")
+    Log::FatalError.(message: "#{self.class.name} is an abstract class")
   end
 end
