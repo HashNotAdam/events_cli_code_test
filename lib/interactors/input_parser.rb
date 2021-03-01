@@ -4,6 +4,7 @@ require "interactors/application_interactor"
 require "interactors/create_event"
 require "interactors/create_speaker"
 require "interactors/create_talk"
+require "interactors/print_talks"
 require "interactors/documentation"
 require "interactors/exit"
 

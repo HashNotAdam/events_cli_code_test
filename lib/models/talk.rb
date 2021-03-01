@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "models/application_model"
+require "presenters/talk_presenter"
 require "repositories/events"
 require "repositories/speakers"
 require "time"
@@ -11,6 +12,10 @@ class Talk < ApplicationModel
   attr_accessor :start_time
   attr_accessor :end_time
   attr_accessor :speaker_name
+
+  def self.now
+    @now ||= Time.now
+  end
 
   def valid?
     validate
@@ -33,33 +38,35 @@ class Talk < ApplicationModel
   end
 
   def validate_times
-    now = Time.now
-    parsed_start = validate_start_time(now)
-    parsed_end = validate_end_time(now)
+    parsed_start = validate_start_time
+    parsed_end = validate_end_time
     return if parsed_start.nil? || parsed_end.nil?
 
-    validate_start_preceeds_end(parsed_start, parsed_end)
-    validate_sequential_time_order(parsed_start, now)
+    self.start_time = parsed_start
+    self.end_time = parsed_end
+
+    validate_start_preceeds_end
+    validate_talks_do_not_overlap
   end
 
-  def validate_start_time(now)
-    time = parse_time(start_time, now)
+  def validate_start_time
+    time = parse_time(start_time)
     return time unless time.nil?
 
     time_parse_error("start time", start_time)
     nil
   end
 
-  def validate_end_time(now)
-    time = parse_time(end_time, now)
+  def validate_end_time
+    time = parse_time(end_time)
     return time unless time.nil?
 
     time_parse_error("end time", end_time)
     nil
   end
 
-  def parse_time(time, now)
-    Time.parse(time, now)
+  def parse_time(time)
+    Time.parse(time, self.class.now)
   rescue ArgumentError
   end
 
@@ -67,20 +74,28 @@ class Talk < ApplicationModel
     errors << %(Could not understand #{attribute} "#{value}")
   end
 
-  def validate_start_preceeds_end(parsed_start, parsed_end)
-    return if (parsed_end - parsed_start).positive?
+  def validate_start_preceeds_end
+    return if (end_time - start_time).positive?
 
     errors << "The start time must preceed the end time"
   end
 
-  def validate_sequential_time_order(parsed_start, now)
-    last_talk = Talks.all[-1]
-    return if last_talk.nil?
+  def validate_talks_do_not_overlap
+    Talks.where(:event_name, event_name).each do |another_talk|
+      next unless overlaps?(another_talk)
 
-    last_parsed_end = parse_time(last_talk.end_time, now)
-    return if last_parsed_end <= parsed_start
+      presenter = TalkPresenter.new(another_talk)
+      errors <<
+        "Talk overlaps with #{another_talk.name} (#{presenter.schedule})"
+    end
+  end
 
-    errors << "Talks must be entered in sequential order and cannot overlap"
+  def overlaps?(another_talk)
+    time_range = (another_talk.start_time + 1)..(another_talk.end_time - 1)
+    return true if time_range.include?(start_time)
+    return true if time_range.include?(end_time)
+
+    false
   end
 
   def validate_speaker

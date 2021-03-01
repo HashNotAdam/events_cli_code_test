@@ -11,7 +11,7 @@ class ApplicationInteractor
       new(*args, **keyword_args).call
     rescue HaltInteractionError
     rescue StandardError => e
-      $stderr.write(<<~MESSAGE)
+      Log::Error.(message: <<~MESSAGE)
         An unexpected error has occurred: #{e.message}
         #{e.backtrace.first}
       MESSAGE
